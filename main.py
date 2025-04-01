@@ -1,101 +1,189 @@
 """
 Academic Performance Analyzer
 Proyecto para la Universidad de Santander (UDES)
-Este sistema analiza el rendimiento académico de estudiantes, programas y facultades.
+Sistema para analizar el rendimiento académico de estudiantes, 
+programas y facultades con persistencia en JSON.
 """
 
 import os
 import sys
+import json
+from typing import Any, Callable, Dict, List, Optional, Union
 
-# Función para limpiar la consola de forma cross-platform
-# !Falta testear en MacOS
-def clear_screen():
+DATA_FILE = "data.json"
+
+
+def load_data() -> Dict[str, Any]:
+    """
+    Carga los datos desde un archivo JSON.
+    Si el archivo no existe, se crean datos por defecto.
+    """
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data
+        except Exception as e:
+            print(f"*** ERROR: No se pudo cargar el archivo de datos: {e} ***")
+    # Datos por defecto si no existe archivo o error al cargar
+    data = {
+        "estudiantes": [
+            {"codigo": "2020115001", "nombre": "Carolina Martínez Ruiz",
+             "programa": "Ingeniería de Software", "semestre": 7},
+            {"codigo": "2021220034", "nombre": "Andrés Felipe Gómez",
+             "programa": "Medicina", "semestre": 5},
+            {"codigo": "2022118092", "nombre": "Valentina Sánchez Torres",
+             "programa": "Ingeniería de Software", "semestre": 3},
+            {"codigo": "2019456123", "nombre": "Juan Carlos Ramírez",
+             "programa": "Administración de Empresas", "semestre": 8},
+            {"codigo": "2023110056", "nombre": "Daniela Hernández Díaz",
+             "programa": "Psicología", "semestre": 2},
+            {"codigo": "2020119045", "nombre": "Miguel Ángel Quintero",
+             "programa": "Ingeniería de Software", "semestre": 6},
+            {"codigo": "2021345087", "nombre": "Laura Sofía Parra",
+             "programa": "Derecho", "semestre": 5},
+            {"codigo": "2020112089", "nombre": "Santiago Ortiz Méndez",
+             "programa": "Ingeniería de Software", "semestre": 7},
+            {"codigo": "2022230078", "nombre": "Isabella Castro Rojas",
+             "programa": "Enfermería", "semestre": 3},
+            {"codigo": "2021116032", "nombre": "David Alejandro Moreno",
+             "programa": "Ingeniería de Software", "semestre": 5}
+        ],
+        "asignaturas": [
+            {"codigo": "IS2045", "nombre": "Fundamentos de Programación",
+             "creditos": 4, "programa": "Ingeniería de Software"},
+            {"codigo": "IS3067", "nombre": "Gestores de Bases de Datos",
+             "creditos": 3, "programa": "Ingeniería de Software"},
+            {"codigo": "IS4023", "nombre": "Diseño de Software I",
+             "creditos": 3, "programa": "Ingeniería de Software"},
+            {"codigo": "CB1015", "nombre": "Cálculo Diferencial",
+             "creditos": 4, "programa": "Ciencias Básicas"},
+            {"codigo": "CB1024", "nombre": "Física Mecánica",
+             "creditos": 4, "programa": "Ciencias Básicas"}
+        ],
+        "calificaciones": [
+            {"codigo_estudiante": "2020115001", "codigo_asignatura": "IS3067",
+             "nota": 4.2, "periodo": "2023-1"},
+            {"codigo_estudiante": "2020115001", "codigo_asignatura": "IS4023",
+             "nota": 3.8, "periodo": "2023-1"},
+            {"codigo_estudiante": "2020119045", "codigo_asignatura": "IS3067",
+             "nota": 3.5, "periodo": "2023-1"},
+            {"codigo_estudiante": "2020119045", "codigo_asignatura": "IS4023",
+             "nota": 4.0, "periodo": "2023-1"},
+            {"codigo_estudiante": "2020112089", "codigo_asignatura": "IS3067",
+             "nota": 4.5, "periodo": "2023-1"},
+            {"codigo_estudiante": "2020112089", "codigo_asignatura": "IS4023",
+             "nota": 4.3, "periodo": "2023-1"},
+            {"codigo_estudiante": "2022118092", "codigo_asignatura": "CB1015",
+             "nota": 3.2, "periodo": "2023-1"},
+            {"codigo_estudiante": "2022118092", "codigo_asignatura": "CB1024",
+             "nota": 2.8, "periodo": "2023-1"},
+            {"codigo_estudiante": "2021116032", "codigo_asignatura": "CB1015",
+             "nota": 3.6, "periodo": "2023-1"},
+            {"codigo_estudiante": "2021116032", "codigo_asignatura": "CB1024",
+             "nota": 3.4, "periodo": "2023-1"},
+            {"codigo_estudiante": "2020115001", "codigo_asignatura": "IS2045",
+             "nota": 4.7, "periodo": "2023-2"},
+            {"codigo_estudiante": "2020119045", "codigo_asignatura": "IS2045",
+             "nota": 3.9, "periodo": "2023-2"},
+            {"codigo_estudiante": "2022118092", "codigo_asignatura": "IS2045",
+             "nota": 2.9, "periodo": "2023-2"},
+            {"codigo_estudiante": "2020112089", "codigo_asignatura": "IS2045",
+             "nota": 4.2, "periodo": "2023-2"},
+            {"codigo_estudiante": "2021116032", "codigo_asignatura": "IS2045",
+             "nota": 3.8, "periodo": "2023-2"},
+            {"codigo_estudiante": "2021116032", "codigo_asignatura": "IS3067",
+             "nota": 4.1, "periodo": "2023-2"},
+            {"codigo_estudiante": "2022118092", "codigo_asignatura": "IS3067",
+             "nota": 3.0, "periodo": "2023-2"},
+            {"codigo_estudiante": "2020115001", "codigo_asignatura": "CB1015",
+             "nota": 4.3, "periodo": "2023-2"},
+            {"codigo_estudiante": "2020119045", "codigo_asignatura": "CB1015",
+             "nota": 3.7, "periodo": "2023-2"},
+            {"codigo_estudiante": "2020112089", "codigo_asignatura": "CB1015",
+             "nota": 4.8, "periodo": "2023-2"},
+            {"codigo_estudiante": "2021116032", "codigo_asignatura": "IS4023",
+             "nota": 3.2, "periodo": "2024-1"},
+            {"codigo_estudiante": "2022118092", "codigo_asignatura": "IS4023",
+             "nota": 2.7, "periodo": "2024-1"},
+            {"codigo_estudiante": "2020115001", "codigo_asignatura": "CB1024",
+             "nota": 3.9, "periodo": "2024-1"},
+            {"codigo_estudiante": "2020119045", "codigo_asignatura": "CB1024",
+             "nota": 3.5, "periodo": "2024-1"},
+            {"codigo_estudiante": "2020112089", "codigo_asignatura": "CB1024",
+             "nota": 4.6, "periodo": "2024-1"},
+            {"codigo_estudiante": "2021116032", "codigo_asignatura": "CB1024",
+             "nota": 3.3, "periodo": "2024-1"},
+            {"codigo_estudiante": "2022118092", "codigo_asignatura": "CB1015",
+             "nota": 3.4, "periodo": "2024-1"},
+            {"codigo_estudiante": "2020115001", "codigo_asignatura": "IS4023",
+             "nota": 4.5, "periodo": "2024-1"},
+            {"codigo_estudiante": "2020119045", "codigo_asignatura": "IS4023",
+             "nota": 4.2, "periodo": "2024-1"},
+            {"codigo_estudiante": "2020112089", "codigo_asignatura": "IS3067",
+             "nota": 4.7, "periodo": "2024-1"}
+        ],
+        "facultades": {
+            "Facultad de Ingenierías": [
+                "Ingeniería de Software",
+                "Ingeniería Civil",
+                "Ingeniería Ambiental"
+            ],
+            "Facultad de Ciencias de la Salud": [
+                "Medicina",
+                "Enfermería",
+                "Psicología"
+            ],
+            "Facultad de Ciencias Económicas, Administrativas y Contables": [
+                "Administración de Empresas",
+                "Contaduría Pública"
+            ],
+            "Facultad de Ciencias Sociales, Políticas y Jurídicas": [
+                "Derecho",
+                "Comunicación Social"
+            ]
+        },
+        "programas": {
+            "IS": "Ingeniería de Software",
+            "MD": "Medicina",
+            "AE": "Administración de Empresas",
+            "PSI": "Psicología",
+            "DER": "Derecho"
+        }
+    }
+    return data
+
+
+def save_data(data: Dict[str, Any]) -> None:
+    """
+    Guarda los datos en un archivo JSON.
+    """
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"*** ERROR: No se pudo guardar el archivo de datos: {e} ***")
+
+
+def clear_screen() -> None:
     """
     Limpia la pantalla de la terminal según el sistema operativo.
     """
     os.system("cls" if os.name == "nt" else "clear")
 
 
-# Datos
-# Posible mejora, administrar la data con archivos JSON para tener persistencia de datos
-estudiantes = [
-    {"codigo": "2020115001", "nombre": "Carolina Martínez Ruiz", "programa": "Ingeniería de Software", "semestre": 7},
-    {"codigo": "2021220034", "nombre": "Andrés Felipe Gómez", "programa": "Medicina", "semestre": 5},
-    {"codigo": "2022118092", "nombre": "Valentina Sánchez Torres", "programa": "Ingeniería de Software", "semestre": 3},
-    {"codigo": "2019456123", "nombre": "Juan Carlos Ramírez", "programa": "Administración de Empresas", "semestre": 8},
-    {"codigo": "2023110056", "nombre": "Daniela Hernández Díaz", "programa": "Psicología", "semestre": 2},
-    {"codigo": "2020119045", "nombre": "Miguel Ángel Quintero", "programa": "Ingeniería de Software", "semestre": 6},
-    {"codigo": "2021345087", "nombre": "Laura Sofía Parra", "programa": "Derecho", "semestre": 5},
-    {"codigo": "2020112089", "nombre": "Santiago Ortiz Méndez", "programa": "Ingeniería de Software", "semestre": 7},
-    {"codigo": "2022230078", "nombre": "Isabella Castro Rojas", "programa": "Enfermería", "semestre": 3},
-    {"codigo": "2021116032", "nombre": "David Alejandro Moreno", "programa": "Ingeniería de Software", "semestre": 5}
-]
+def reportar_error(mensaje: str) -> None:
+    """
+    Imprime un mensaje de error formateado.
+    """
+    print(f"*** ERROR: {mensaje} ***")
 
-asignaturas = [
-    {"codigo": "IS2045", "nombre": "Fundamentos de Programación", "creditos": 4, "programa": "Ingeniería de Software"},
-    {"codigo": "IS3067", "nombre": "Gestores de Bases de Datos", "creditos": 3, "programa": "Ingeniería de Software"},
-    {"codigo": "IS4023", "nombre": "Diseño de Software I", "creditos": 3, "programa": "Ingeniería de Software"},
-    {"codigo": "CB1015", "nombre": "Cálculo Diferencial", "creditos": 4, "programa": "Ciencias Básicas"},
-    {"codigo": "CB1024", "nombre": "Física Mecánica", "creditos": 4, "programa": "Ciencias Básicas"}
-]
 
-calificaciones = [
-    {"codigo_estudiante": "2020115001", "codigo_asignatura": "IS3067", "nota": 4.2, "periodo": "2023-1"},
-    {"codigo_estudiante": "2020115001", "codigo_asignatura": "IS4023", "nota": 3.8, "periodo": "2023-1"},
-    {"codigo_estudiante": "2020119045", "codigo_asignatura": "IS3067", "nota": 3.5, "periodo": "2023-1"},
-    {"codigo_estudiante": "2020119045", "codigo_asignatura": "IS4023", "nota": 4.0, "periodo": "2023-1"},
-    {"codigo_estudiante": "2020112089", "codigo_asignatura": "IS3067", "nota": 4.5, "periodo": "2023-1"},
-    {"codigo_estudiante": "2020112089", "codigo_asignatura": "IS4023", "nota": 4.3, "periodo": "2023-1"},
-    {"codigo_estudiante": "2022118092", "codigo_asignatura": "CB1015", "nota": 3.2, "periodo": "2023-1"},
-    {"codigo_estudiante": "2022118092", "codigo_asignatura": "CB1024", "nota": 2.8, "periodo": "2023-1"},
-    {"codigo_estudiante": "2021116032", "codigo_asignatura": "CB1015", "nota": 3.6, "periodo": "2023-1"},
-    {"codigo_estudiante": "2021116032", "codigo_asignatura": "CB1024", "nota": 3.4, "periodo": "2023-1"},
-    
-    {"codigo_estudiante": "2020115001", "codigo_asignatura": "IS2045", "nota": 4.7, "periodo": "2023-2"},
-    {"codigo_estudiante": "2020119045", "codigo_asignatura": "IS2045", "nota": 3.9, "periodo": "2023-2"},
-    {"codigo_estudiante": "2022118092", "codigo_asignatura": "IS2045", "nota": 2.9, "periodo": "2023-2"},
-    {"codigo_estudiante": "2020112089", "codigo_asignatura": "IS2045", "nota": 4.2, "periodo": "2023-2"},
-    {"codigo_estudiante": "2021116032", "codigo_asignatura": "IS2045", "nota": 3.8, "periodo": "2023-2"},
-    {"codigo_estudiante": "2021116032", "codigo_asignatura": "IS3067", "nota": 4.1, "periodo": "2023-2"},
-    {"codigo_estudiante": "2022118092", "codigo_asignatura": "IS3067", "nota": 3.0, "periodo": "2023-2"},
-    {"codigo_estudiante": "2020115001", "codigo_asignatura": "CB1015", "nota": 4.3, "periodo": "2023-2"},
-    {"codigo_estudiante": "2020119045", "codigo_asignatura": "CB1015", "nota": 3.7, "periodo": "2023-2"},
-    {"codigo_estudiante": "2020112089", "codigo_asignatura": "CB1015", "nota": 4.8, "periodo": "2023-2"},
-    
-    {"codigo_estudiante": "2021116032", "codigo_asignatura": "IS4023", "nota": 3.2, "periodo": "2024-1"},
-    {"codigo_estudiante": "2022118092", "codigo_asignatura": "IS4023", "nota": 2.7, "periodo": "2024-1"},
-    {"codigo_estudiante": "2020115001", "codigo_asignatura": "CB1024", "nota": 3.9, "periodo": "2024-1"},
-    {"codigo_estudiante": "2020119045", "codigo_asignatura": "CB1024", "nota": 3.5, "periodo": "2024-1"},
-    {"codigo_estudiante": "2020112089", "codigo_asignatura": "CB1024", "nota": 4.6, "periodo": "2024-1"},
-    {"codigo_estudiante": "2021116032", "codigo_asignatura": "CB1024", "nota": 3.3, "periodo": "2024-1"},
-    {"codigo_estudiante": "2022118092", "codigo_asignatura": "CB1015", "nota": 3.4, "periodo": "2024-1"},
-    {"codigo_estudiante": "2020115001", "codigo_asignatura": "IS4023", "nota": 4.5, "periodo": "2024-1"},
-    {"codigo_estudiante": "2020119045", "codigo_asignatura": "IS4023", "nota": 4.2, "periodo": "2024-1"},
-    {"codigo_estudiante": "2020112089", "codigo_asignatura": "IS3067", "nota": 4.7, "periodo": "2024-1"}
-]
-
-facultades = {
-    "Facultad de Ingenierías": ["Ingeniería de Software", "Ingeniería Civil", "Ingeniería Ambiental"],
-    "Facultad de Ciencias de la Salud": ["Medicina", "Enfermería", "Psicología"],
-    "Facultad de Ciencias Económicas, Administrativas y Contables": ["Administración de Empresas", "Contaduría Pública"],
-    "Facultad de Ciencias Sociales, Políticas y Jurídicas": ["Derecho", "Comunicación Social"]
-}
-
-# Diccionario de programas para evitar errores de escritura por consola (código -> nombre)
-programas = {
-    "IS": "Ingeniería de Software",
-    "MD": "Medicina",
-    "AE": "Administración de Empresas",
-    "PSI": "Psicología",
-    "DER": "Derecho"
-}
-
-# Función genérica para registrar una entidad en una lista como estudiantes, asignaturas, calificaciones ya que todas tienen la misma logica
-def registrar_entidad(entidad, lista_destino):
+def registrar_entidad(entidad: Dict[str, Any], lista_destino: List[Dict[str, Any]]) -> None:
     """
     Registra una entidad en la lista destino.
 
-    Parámetros:
+    Args:
         entidad: Diccionario con la información de la entidad.
         lista_destino: Lista donde se agregará la entidad.
     """
@@ -104,32 +192,48 @@ def registrar_entidad(entidad, lista_destino):
     except Exception as e:
         reportar_error(f"Error al registrar entidad: {e}")
 
-# Función de orden superior: filtrar calificaciones usando una función de filtro ingresada como parámetro
-def filtrar_calificaciones(lista, filtro_func):
+
+def filtrar_calificaciones(
+    lista: List[Dict[str, Any]], filtro_func: Callable[[Dict[str, Any]], bool]
+) -> List[Dict[str, Any]]:
     """
     Filtra una lista de calificaciones usando una función de filtro.
 
-    Parámetros:
+    Args:
         lista: Lista de calificaciones.
         filtro_func: Función que devuelve True/False.
-    Retorna:
+
+    Returns:
         Lista filtrada.
     """
     return [item for item in lista if filtro_func(item)]
 
-# Funciones de análisis individual
-def calcular_promedio_estudiante(codigo_estudiante, periodo=None, calificaciones=calificaciones):
+
+def calcular_promedio_estudiante(
+    codigo_estudiante: str,
+    periodo: Optional[str] = None,
+    calificaciones: Optional[List[Dict[str, Any]]] = None
+) -> Optional[float]:
     """
     Calcula el promedio de un estudiante.
-    
-    Parámetros:
+
+    Args:
         codigo_estudiante: Código del estudiante.
         periodo: (Opcional) Periodo académico (ej. "2023-1").
-    Retorna:
+        calificaciones: Lista de calificaciones. Si no se pasa, se usa la data cargada.
+
+    Returns:
         Promedio o None.
     """
+    if calificaciones is None:
+        calificaciones = data["calificaciones"]
     try:
-        notas = [reg["nota"] for reg in calificaciones if reg["codigo_estudiante"] == codigo_estudiante and (reg["periodo"] == periodo if periodo else True)]
+        notas = [
+            reg["nota"]
+            for reg in calificaciones
+            if reg["codigo_estudiante"] == codigo_estudiante and
+            (reg["periodo"] == periodo if periodo else True)
+        ]
         if not notas:
             return None
         return sum(notas) / len(notas)
@@ -137,17 +241,27 @@ def calcular_promedio_estudiante(codigo_estudiante, periodo=None, calificaciones
         reportar_error(f"Error al calcular promedio para {codigo_estudiante}: {e}")
         return None
 
-def obtener_historial_academico(codigo_estudiante, calificaciones=calificaciones):
+
+def obtener_historial_academico(
+    codigo_estudiante: str,
+    calificaciones: Optional[List[Dict[str, Any]]] = None
+) -> List[Dict[str, Any]]:
     """
     Obtiene el historial académico de un estudiante.
-    
-    Parámetros:
+
+    Args:
         codigo_estudiante: Código del estudiante.
-    Retorna:
+        calificaciones: Lista de calificaciones.
+
+    Returns:
         Lista de registros.
     """
+    if calificaciones is None:
+        calificaciones = data["calificaciones"]
     try:
-        historial = [reg for reg in calificaciones if reg["codigo_estudiante"] == codigo_estudiante]
+        historial = [
+            reg for reg in calificaciones if reg["codigo_estudiante"] == codigo_estudiante
+        ]
         if not historial:
             raise ValueError("No se encontró historial para el estudiante.")
         return historial
@@ -155,17 +269,27 @@ def obtener_historial_academico(codigo_estudiante, calificaciones=calificaciones
         reportar_error(f"Error al obtener historial para {codigo_estudiante}: {e}")
         return []
 
-def analizar_desempeno_estudiante(codigo_estudiante, calificaciones=calificaciones):
+
+def analizar_desempeno_estudiante(
+    codigo_estudiante: str,
+    calificaciones: Optional[List[Dict[str, Any]]] = None
+) -> Dict[str, Dict[str, Any]]:
     """
     Identifica la asignatura con mejor y peor desempeño de un estudiante.
-    
-    Parámetros:
+
+    Args:
         codigo_estudiante: Código del estudiante.
-    Retorna:
+        calificaciones: Lista de calificaciones.
+
+    Returns:
         Diccionario con 'mejor' y 'peor' desempeño.
     """
+    if calificaciones is None:
+        calificaciones = data["calificaciones"]
     try:
-        registros = [reg for reg in calificaciones if reg["codigo_estudiante"] == codigo_estudiante]
+        registros = [
+            reg for reg in calificaciones if reg["codigo_estudiante"] == codigo_estudiante
+        ]
         if not registros:
             raise ValueError("No hay registros para el estudiante.")
         mejor = max(registros, key=lambda x: x["nota"])
@@ -175,20 +299,38 @@ def analizar_desempeno_estudiante(codigo_estudiante, calificaciones=calificacion
         reportar_error(f"Error en desempeño para {codigo_estudiante}: {e}")
         return {}
 
-# Funciones de análisis por programa académico
-def promedio_programa(programa, periodo, calificaciones=calificaciones, estudiantes=estudiantes):
+
+def promedio_programa(
+    programa: str,
+    periodo: str,
+    calificaciones: Optional[List[Dict[str, Any]]] = None,
+    estudiantes: Optional[List[Dict[str, Any]]] = None
+) -> Optional[float]:
     """
     Calcula el promedio general de un programa en un periodo.
-    
-    Parámetros:
+
+    Args:
         programa: Nombre del programa.
         periodo: Periodo académico.
-    Retorna:
+        calificaciones: Lista de calificaciones.
+        estudiantes: Lista de estudiantes.
+
+    Returns:
         Promedio o None.
     """
+    if calificaciones is None:
+        calificaciones = data["calificaciones"]
+    if estudiantes is None:
+        estudiantes = data["estudiantes"]
     try:
-        codigos_prog = [est["codigo"] for est in estudiantes if est["programa"] == programa]
-        notas = [reg["nota"] for reg in calificaciones if reg["codigo_estudiante"] in codigos_prog and reg["periodo"] == periodo]
+        codigos_prog = [
+            est["codigo"] for est in estudiantes if est["programa"] == programa
+        ]
+        notas = [
+            reg["nota"]
+            for reg in calificaciones
+            if reg["codigo_estudiante"] in codigos_prog and reg["periodo"] == periodo
+        ]
         if not notas:
             raise ValueError("No se encontraron calificaciones para el programa en ese periodo.")
         return sum(notas) / len(notas)
@@ -196,20 +338,42 @@ def promedio_programa(programa, periodo, calificaciones=calificaciones, estudian
         reportar_error(f"Error al calcular promedio para el programa {programa} en {periodo}: {e}")
         return None
 
-def asignaturas_mayor_reprobacion(programa, periodo, calificaciones=calificaciones, asignaturas=asignaturas, estudiantes=estudiantes):
+
+def asignaturas_mayor_reprobacion(
+    programa: str,
+    periodo: str,
+    calificaciones: Optional[List[Dict[str, Any]]] = None,
+    asignaturas: Optional[List[Dict[str, Any]]] = None,
+    estudiantes: Optional[List[Dict[str, Any]]] = None
+) -> List[Dict[str, Union[str, float]]]:
     """
     Identifica asignaturas con mayor índice de reprobación en un programa para un periodo.
-    
-    Parámetros:
+
+    Args:
         programa: Nombre del programa.
         periodo: Periodo académico.
-    Retorna:
+        calificaciones: Lista de calificaciones.
+        asignaturas: Lista de asignaturas.
+        estudiantes: Lista de estudiantes.
+
+    Returns:
         Lista de asignaturas con porcentaje de reprobación.
     """
+    if calificaciones is None:
+        calificaciones = data["calificaciones"]
+    if asignaturas is None:
+        asignaturas = data["asignaturas"]
+    if estudiantes is None:
+        estudiantes = data["estudiantes"]
     try:
-        codigos_prog = [est["codigo"] for est in estudiantes if est["programa"] == programa]
-        regs = [reg for reg in calificaciones if reg["codigo_estudiante"] in codigos_prog and reg["periodo"] == periodo]
-        stats = {}
+        codigos_prog = [
+            est["codigo"] for est in estudiantes if est["programa"] == programa
+        ]
+        regs = [
+            reg for reg in calificaciones
+            if reg["codigo_estudiante"] in codigos_prog and reg["periodo"] == periodo
+        ]
+        stats: Dict[str, Dict[str, int]] = {}
         for reg in regs:
             codigo_asig = reg["codigo_asignatura"]
             stats.setdefault(codigo_asig, {"total": 0, "reprobados": 0})
@@ -219,24 +383,45 @@ def asignaturas_mayor_reprobacion(programa, periodo, calificaciones=calificacion
         resultados = []
         for codigo, datos in stats.items():
             porcentaje = datos["reprobados"] / datos["total"]
-            nombre_asig = next((a["nombre"] for a in asignaturas if a["codigo"] == codigo), "Desconocido")
-            resultados.append({"codigo": codigo, "nombre": nombre_asig, "porcentaje_reprobacion": porcentaje})
+            nombre_asig = next(
+                (a["nombre"] for a in asignaturas if a["codigo"] == codigo), "Desconocido"
+            )
+            resultados.append({
+                "codigo": codigo,
+                "nombre": nombre_asig,
+                "porcentaje_reprobacion": porcentaje
+            })
         resultados.sort(key=lambda x: x["porcentaje_reprobacion"], reverse=True)
         return resultados
     except Exception as e:
         reportar_error(f"Error en asignaturas reprobadas para {programa}: {e}")
         return []
 
-def comparar_periodos(programa, periodo1, periodo2, calificaciones=calificaciones, estudiantes=estudiantes):
+
+def comparar_periodos(
+    programa: str,
+    periodo1: str,
+    periodo2: str,
+    calificaciones: Optional[List[Dict[str, Any]]] = None,
+    estudiantes: Optional[List[Dict[str, Any]]] = None
+) -> Dict[str, Optional[float]]:
     """
     Compara el promedio de un programa entre dos periodos.
-    
-    Parámetros:
+
+    Args:
         programa: Nombre del programa.
-        periodo1, periodo2: Periodos a comparar.
-    Retorna:
+        periodo1: Primer periodo.
+        periodo2: Segundo periodo.
+        calificaciones: Lista de calificaciones.
+        estudiantes: Lista de estudiantes.
+
+    Returns:
         Diccionario con promedios.
     """
+    if calificaciones is None:
+        calificaciones = data["calificaciones"]
+    if estudiantes is None:
+        estudiantes = data["estudiantes"]
     try:
         prom1 = promedio_programa(programa, periodo1, calificaciones, estudiantes)
         prom2 = promedio_programa(programa, periodo2, calificaciones, estudiantes)
@@ -245,14 +430,15 @@ def comparar_periodos(programa, periodo1, periodo2, calificaciones=calificacione
         reportar_error(f"Error al comparar periodos para {programa}: {e}")
         return {}
 
-# Funciones de análisis comparativo y reportes
-def generar_estadisticas(grades_list):
+
+def generar_estadisticas(grades_list: List[float]) -> Dict[str, float]:
     """
     Genera estadísticas (promedio, mínimo, máximo) de una lista de notas.
-    
-    Parámetros:
+
+    Args:
         grades_list: Lista de números.
-    Retorna:
+
+    Returns:
         Diccionario con 'promedio', 'minimo' y 'maximo'.
     """
     try:
@@ -264,42 +450,110 @@ def generar_estadisticas(grades_list):
         reportar_error(f"Error al generar estadísticas: {e}")
         return {}
 
-def identificar_top_estudiantes(n=5, periodo=None, calificaciones=calificaciones, estudiantes=estudiantes):
+
+def identificar_top_estudiantes(
+    n: int = 5,
+    periodo: Optional[str] = None,
+    calificaciones: Optional[List[Dict[str, Any]]] = None,
+    estudiantes: Optional[List[Dict[str, Any]]] = None
+) -> List[Dict[str, Union[str, float]]]:
     """
     Identifica los top n estudiantes según su promedio.
-    
-    Parámetros:
+
+    Args:
         n: Número de estudiantes (por defecto 5).
         periodo: (Opcional) Filtrado por periodo.
-    Retorna:
+        calificaciones: Lista de calificaciones.
+        estudiantes: Lista de estudiantes.
+
+    Returns:
         Lista de estudiantes con su promedio.
     """
+    if calificaciones is None:
+        calificaciones = data["calificaciones"]
+    if estudiantes is None:
+        estudiantes = data["estudiantes"]
     try:
         lista_promedios = []
         for est in estudiantes:
             prom = calcular_promedio_estudiante(est["codigo"], periodo, calificaciones)
             if prom is not None:
-                lista_promedios.append({"codigo": est["codigo"], "nombre": est["nombre"], "promedio": prom})
+                lista_promedios.append({
+                    "codigo": est["codigo"],
+                    "nombre": est["nombre"],
+                    "promedio": prom
+                })
         lista_promedios.sort(key=lambda x: x["promedio"], reverse=True)
         return lista_promedios[:n]
     except Exception as e:
         reportar_error(f"Error al identificar top estudiantes: {e}")
         return []
 
-# Función para reportar errores de forma formateada
-def reportar_error(mensaje):
+
+def validar_nota(nota: float) -> bool:
     """
-    Imprime un mensaje de error formateado.
+    Valida que la nota esté en el rango [0, 5].
+
+    Args:
+        nota: Nota a validar.
+
+    Returns:
+        True si es válida, False en caso contrario.
     """
-    print(f"*** ERROR: {mensaje} ***")
+    return 0.0 <= nota <= 5.0
 
 
-# MENUS
-# =============================================================================
-# lo ideal seria separar estos menus en archivos ui por ejemplo
+def validar_codigo_unico(
+    codigo: str, estudiantes: List[Dict[str, Any]]
+) -> bool:
+    """
+    Verifica que el código de estudiante no exista ya en la lista.
 
-# Menú para gestión de Estudiantes
-def menu_estudiantes():
+    Args:
+        codigo: Código a validar.
+        estudiantes: Lista de estudiantes.
+
+    Returns:
+        True si es único, False de lo contrario.
+    """
+    return not any(est["codigo"] == codigo for est in estudiantes)
+
+
+def existe_asignatura(codigo_asig: str, asignaturas: List[Dict[str, Any]]) -> bool:
+    """
+    Valida que la asignatura exista en la lista de asignaturas.
+
+    Args:
+        codigo_asig: Código de la asignatura.
+        asignaturas: Lista de asignaturas.
+
+    Returns:
+        True si existe, False de lo contrario.
+    """
+    return any(a["codigo"] == codigo_asig for a in asignaturas)
+
+
+def existe_estudiante(codigo_est: str, estudiantes: List[Dict[str, Any]]) -> bool:
+    """
+    Valida que el estudiante exista en la lista de estudiantes.
+
+    Args:
+        codigo_est: Código del estudiante.
+        estudiantes: Lista de estudiantes.
+
+    Returns:
+        True si existe, False de lo contrario.
+    """
+    return any(est["codigo"] == codigo_est for est in estudiantes)
+
+
+# ----------------- Menús ----------------- #
+
+
+def menu_estudiantes() -> None:
+    """
+    Menú para la gestión de estudiantes.
+    """
     while True:
         clear_screen()
         print("=== Menú Estudiantes ===")
@@ -318,11 +572,14 @@ def menu_estudiantes():
         if op == 1:
             clear_screen()
             print("Registrar nuevo estudiante")
-            codigo = input("Código: ")
-            nombre = input("Nombre: ")
-            # Para el programa, se pide el código y se busca en el diccionario
-            prog_code = input("Código del programa (ej. IS, MD, AE, PSI, DER): ").upper()
-            programa = programas.get(prog_code)
+            codigo = input("Código: ").strip()
+            if not validar_codigo_unico(codigo, data["estudiantes"]):
+                print("Error: Código duplicado.")
+                input("Presione Enter para continuar...")
+                continue
+            nombre = input("Nombre: ").strip()
+            prog_code = input("Código del programa (ej. IS, MD, AE, PSI, DER): ").strip().upper()
+            programa = data["programas"].get(prog_code)
             if not programa:
                 print("Código de programa inválido.")
                 input("Presione Enter para continuar...")
@@ -333,46 +590,63 @@ def menu_estudiantes():
                 print("Semestre inválido.")
                 input("Presione Enter para continuar...")
                 continue
-            nuevo_est = {"codigo": codigo, "nombre": nombre, "programa": programa, "semestre": semestre}
-            registrar_entidad(nuevo_est, estudiantes)
+            nuevo_est = {
+                "codigo": codigo,
+                "nombre": nombre,
+                "programa": programa,
+                "semestre": semestre
+            }
+            registrar_entidad(nuevo_est, data["estudiantes"])
+            save_data(data)
             print("Estudiante registrado exitosamente.")
             input("Presione Enter para continuar...")
+
         elif op == 2:
             clear_screen()
             print("Calcular promedio de un estudiante")
-            codigo = input("Ingrese el código del estudiante: ")
-            periodo = input("Ingrese el periodo (dejar vacío para global): ")
-            periodo = periodo if periodo.strip() != "" else None
+            codigo = input("Ingrese el código del estudiante: ").strip()
+            periodo = input("Ingrese el periodo (dejar vacío para global): ").strip()
+            periodo = periodo if periodo else None
             prom = calcular_promedio_estudiante(codigo, periodo)
             if prom is not None:
                 print(f"El promedio del estudiante {codigo} es: {prom:.2f}")
+            else:
+                print("No se encontró promedio para el estudiante.")
             input("Presione Enter para continuar...")
+
         elif op == 3:
             clear_screen()
             print("Historial académico del estudiante")
-            codigo = input("Ingrese el código del estudiante: ")
+            codigo = input("Ingrese el código del estudiante: ").strip()
             historial = obtener_historial_academico(codigo)
             if historial:
                 for reg in historial:
                     print(f"Asignatura: {reg['codigo_asignatura']}, Nota: {reg['nota']}, Periodo: {reg['periodo']}")
+            else:
+                print("No se encontró historial para el estudiante.")
             input("Presione Enter para continuar...")
+
         elif op == 4:
             clear_screen()
             print("Analizar desempeño individual")
-            codigo = input("Ingrese el código del estudiante: ")
+            codigo = input("Ingrese el código del estudiante: ").strip()
             desempeño = analizar_desempeno_estudiante(codigo)
             if desempeño:
                 print(f"Mejor desempeño: Asignatura {desempeño['mejor']['codigo_asignatura']} con nota {desempeño['mejor']['nota']}")
                 print(f"Peor desempeño: Asignatura {desempeño['peor']['codigo_asignatura']} con nota {desempeño['peor']['nota']}")
             input("Presione Enter para continuar...")
+
         elif op == 5:
             break
         else:
             print("Opción inválida.")
             input("Presione Enter para continuar...")
 
-# Menú para gestión de Programas Académicos
-def menu_programas():
+
+def menu_programas() -> None:
+    """
+    Menú para la gestión de programas académicos.
+    """
     while True:
         clear_screen()
         print("=== Menú Programas Académicos ===")
@@ -390,9 +664,8 @@ def menu_programas():
         if op == 4:
             break
 
-        # Para buscar, se pide el código del programa
-        prog_code = input("Ingrese el código del programa (ej. IS, MD, AE, PSI, DER): ").upper()
-        programa = programas.get(prog_code)
+        prog_code = input("Ingrese el código del programa (ej. IS, MD, AE, PSI, DER): ").strip().upper()
+        programa = data["programas"].get(prog_code)
         if not programa:
             print("Código de programa inválido.")
             input("Presione Enter para continuar...")
@@ -401,36 +674,54 @@ def menu_programas():
         if op == 1:
             clear_screen()
             print("Promedio de un programa")
-            periodo = input("Ingrese el periodo (ej. '2023-1'): ")
+            periodo = input("Ingrese el periodo (ej. '2023-1'): ").strip()
             prom = promedio_programa(programa, periodo)
             if prom is not None:
                 print(f"El promedio del programa {programa} en {periodo} es: {prom:.2f}")
+            else:
+                print("No se pudo calcular el promedio.")
             input("Presione Enter para continuar...")
+
         elif op == 2:
             clear_screen()
             print("Asignaturas con mayor reprobación")
-            periodo = input("Ingrese el periodo (ej. '2023-1'): ")
+            periodo = input("Ingrese el periodo (ej. '2023-1'): ").strip()
             asignaturas_rep = asignaturas_mayor_reprobacion(programa, periodo)
             if asignaturas_rep:
                 for asig in asignaturas_rep:
                     print(f"{asig['codigo']} - {asig['nombre']}: {asig['porcentaje_reprobacion']*100:.1f}% reprobación")
+            else:
+                print("No se encontraron datos.")
             input("Presione Enter para continuar...")
+
         elif op == 3:
             clear_screen()
             print("Comparar periodos para un programa")
-            periodo1 = input("Ingrese el primer periodo: ")
-            periodo2 = input("Ingrese el segundo periodo: ")
+            periodo1 = input("Ingrese el primer periodo: ").strip()
+            periodo2 = input("Ingrese el segundo periodo: ").strip()
             comp = comparar_periodos(programa, periodo1, periodo2)
             if comp:
-                print(f"Promedio en {periodo1}: {comp['periodo1']:.2f}")
-                print(f"Promedio en {periodo2}: {comp['periodo2']:.2f}")
+                prom1 = comp.get("periodo1")
+                prom2 = comp.get("periodo2")
+                if prom1 is not None:
+                    print(f"Promedio en {periodo1}: {prom1:.2f}")
+                else:
+                    print(f"No hay promedio para {periodo1}.")
+                if prom2 is not None:
+                    print(f"Promedio en {periodo2}: {prom2:.2f}")
+                else:
+                    print(f"No hay promedio para {periodo2}.")
             input("Presione Enter para continuar...")
+
         else:
             print("Opción inválida.")
             input("Presione Enter para continuar...")
 
-# Menú para gestión de Calificaciones
-def menu_calificaciones():
+
+def menu_calificaciones() -> None:
+    """
+    Menú para la gestión de calificaciones.
+    """
     while True:
         clear_screen()
         print("=== Menú Calificaciones ===")
@@ -446,27 +737,53 @@ def menu_calificaciones():
         if op == 1:
             clear_screen()
             print("Registrar calificación")
-            codigo_est = input("Ingrese el código del estudiante: ")
-            codigo_asig = input("Ingrese el código de la asignatura (ej. IS2045, CB1015, etc.): ").upper()
+            codigo_est = input("Ingrese el código del estudiante: ").strip()
+            if not existe_estudiante(codigo_est, data["estudiantes"]):
+                print("Estudiante no registrado.")
+                input("Presione Enter para continuar...")
+                continue
+
+            codigo_asig = input("Ingrese el código de la asignatura (ej. IS2045, CB1015, etc.): ").strip().upper()
+            if not existe_asignatura(codigo_asig, data["asignaturas"]):
+                print("Asignatura no existe.")
+                input("Presione Enter para continuar...")
+                continue
+
             try:
                 nota = float(input("Ingrese la nota (0 a 5): "))
             except Exception:
                 print("Nota inválida.")
                 input("Presione Enter para continuar...")
                 continue
-            periodo = input("Ingrese el periodo (ej. '2023-1'): ")
-            nueva_cal = {"codigo_estudiante": codigo_est, "codigo_asignatura": codigo_asig, "nota": nota, "periodo": periodo}
-            registrar_entidad(nueva_cal, calificaciones)
+
+            if not validar_nota(nota):
+                print("Nota fuera de rango (debe estar entre 0 y 5).")
+                input("Presione Enter para continuar...")
+                continue
+
+            periodo = input("Ingrese el periodo (ej. '2023-1'): ").strip()
+            nueva_cal = {
+                "codigo_estudiante": codigo_est,
+                "codigo_asignatura": codigo_asig,
+                "nota": nota,
+                "periodo": periodo
+            }
+            registrar_entidad(nueva_cal, data["calificaciones"])
+            save_data(data)
             print("Calificación registrada exitosamente.")
             input("Presione Enter para continuar...")
+
         elif op == 2:
             break
         else:
             print("Opción inválida.")
             input("Presione Enter para continuar...")
 
-# Menú para reportes generales
-def menu_reportes():
+
+def menu_reportes() -> None:
+    """
+    Menú para reportes generales.
+    """
     while True:
         clear_screen()
         print("=== Menú Reportes ===")
@@ -479,34 +796,42 @@ def menu_reportes():
             print("Opción inválida.")
             input("Presione Enter para continuar...")
             continue
-        
+
         if op == 1:
             clear_screen()
             print("Estadísticas generales de calificaciones")
-            todas_notas = [reg["nota"] for reg in calificaciones]
+            todas_notas = [reg["nota"] for reg in data["calificaciones"]]
             stats = generar_estadisticas(todas_notas)
             if stats:
                 print(f"Promedio: {stats['promedio']:.2f}")
                 print(f"Mínimo: {stats['minimo']:.2f}")
                 print(f"Máximo: {stats['maximo']:.2f}")
             input("Presione Enter para continuar...")
+
         elif op == 2:
             clear_screen()
             print("Top estudiantes")
-            periodo = input("Ingrese el periodo (dejar vacío para global): ")
-            periodo = periodo if periodo.strip() != "" else None
+            periodo = input("Ingrese el periodo (dejar vacío para global): ").strip()
+            periodo = periodo if periodo else None
             top_est = identificar_top_estudiantes(5, periodo)
-            for est in top_est:
-                print(f"{est['codigo']} - {est['nombre']}: Promedio {est['promedio']:.2f}")
+            if top_est:
+                for est in top_est:
+                    print(f"{est['codigo']} - {est['nombre']}: Promedio {est['promedio']:.2f}")
+            else:
+                print("No se encontraron estudiantes.")
             input("Presione Enter para continuar...")
+
         elif op == 3:
             break
         else:
             print("Opción inválida.")
             input("Presione Enter para continuar...")
 
-# Menú principal de la aplicación
-def main_menu():
+
+def main_menu() -> None:
+    """
+    Menú principal de la aplicación.
+    """
     while True:
         clear_screen()
         print("=== Academic Performance Analyzer ===")
@@ -537,5 +862,7 @@ def main_menu():
             print("Opción inválida.")
             input("Presione Enter para continuar...")
 
+
 if __name__ == "__main__":
+    data = load_data()
     main_menu()
